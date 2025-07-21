@@ -136,15 +136,25 @@ const StudyHistory = () => {
   };
 
   const handleRetakeQuiz = async (record: StudyHistoryRecord) => {
-    if (!record.analysisData) {
-      toast.error("Cannot retake quiz: Original analysis data not found");
+    if (record.type !== "quiz" || !record.quizData) {
+      toast.error("Cannot retake quiz: Quiz data not found");
       return;
     }
 
     setIsRetakingQuiz(record.id!);
     try {
-      // Generate new questions from the original analysis data
-      const result = await generateQuestions([record.analysisData], record.difficulty, record.language as "english" | "tamil");
+      // Create a dummy analysis result from quiz data for question generation
+      const dummyAnalysisResult = {
+        keyPoints: record.quizData.questions?.map(q => q.question) || [],
+        summary: `Quiz retake based on previous ${record.quizData.questions?.length || 0} questions`,
+        tnpscRelevance: "TNPSC practice questions for exam preparation",
+        studyPoints: [],
+        tnpscCategories: ["Quiz Practice"],
+        mainTopic: record.fileName || "Quiz Practice"
+      };
+      
+      // Generate new questions from the dummy analysis data
+      const result = await generateQuestions([dummyAnalysisResult], record.difficulty, record.language as "english" | "tamil");
       
       setQuestionResult({
         ...result,
@@ -413,7 +423,7 @@ const StudyHistory = () => {
                     </div>
 
                     <div className="flex gap-2 flex-wrap">
-                      {record.type === "analysis" && record.analysisData && (
+                      {record.type === "quiz" && record.quizData && (
                         <Button
                           variant="outline"
                           size="sm"

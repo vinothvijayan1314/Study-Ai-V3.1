@@ -24,6 +24,8 @@ import FileRecognitionModal from "./FileRecognitionModal";
 import ModernAnalyzingState from "./ModernAnalyzingState";
 import AdvancedAnalyzingState from "./AdvancedAnalyzingState";
 import { getStudyHistoryForFile } from "@/services/studyHistoryService";
+import { getStudyHistoryRecordById } from "@/services/studyHistoryService";
+import { analyzeImage } from "@/services/geminiService";
 
 export interface AnalysisResult {
   keyPoints: string[];

@@ -296,3 +296,25 @@ export const deleteStudyHistory = async (recordId: string, fileUrls?: string[]):
     throw error;
   }
 };
+
+export const getStudyHistoryRecordById = async (recordId: string): Promise<StudyHistoryRecord | null> => {
+  try {
+    const docRef = doc(db, "studyHistory", recordId);
+    const docSnap = await getDocs(query(collection(db, "studyHistory"), where("__name__", "==", recordId)));
+    
+    if (docSnap.empty) {
+      return null;
+    }
+    
+    const docSnapshot = docSnap.docs[0];
+    const data = docSnapshot.data();
+    
+    return {
+      id: docSnapshot.id,
+      ...(data as Omit<StudyHistoryRecord, 'id'>)
+    } as StudyHistoryRecord;
+  } catch (error) {
+    console.error("Error fetching study history record by ID:", error);
+    return null;
+  }
+};

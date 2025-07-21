@@ -14,12 +14,13 @@ import {
 
 interface FileRecognitionModalProps {
   fileName: string;
-  totalPages: number;
-  analyzedPages: number;
+  totalPages?: number;
+  analyzedPages?: number;
   lastAnalyzed: Date;
   onContinue: () => void;
   onStartNew: () => void;
   onCancel: () => void;
+  isImage?: boolean;
 }
 
 const FileRecognitionModal = ({
@@ -29,10 +30,11 @@ const FileRecognitionModal = ({
   lastAnalyzed,
   onContinue,
   onStartNew,
-  onCancel
+  onCancel,
+  isImage = false
 }: FileRecognitionModalProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const progressPercentage = (analyzedPages / totalPages) * 100;
+  const progressPercentage = totalPages && analyzedPages ? (analyzedPages / totalPages) * 100 : 100;
   
   const handleContinue = async () => {
     setIsLoading(true);
@@ -59,7 +61,7 @@ const FileRecognitionModal = ({
               <FileText className="h-8 w-8 text-white" />
             </div>
             <h2 className="text-2xl font-bold text-gray-800">
-              File Already Analyzed
+              {isImage ? "Image Already Analyzed" : "File Already Analyzed"}
             </h2>
             <p className="text-gray-600">
               We found previous analysis for this document
@@ -78,39 +80,55 @@ const FileRecognitionModal = ({
                       <Calendar className="h-4 w-4" />
                       {formatDate(lastAnalyzed)}
                     </span>
-                    <span>{totalPages} pages total</span>
+                    {!isImage && totalPages && (
+                      <span>{totalPages} pages total</span>
+                    )}
+                    {isImage && (
+                      <span>Image analysis complete</span>
+                    )}
                   </div>
                 </div>
               </div>
 
               {/* Progress */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-700">Analysis Progress</span>
-                  <span className="text-sm text-gray-600">{analyzedPages}/{totalPages} pages</span>
+              {!isImage && totalPages && analyzedPages && (
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700">Analysis Progress</span>
+                    <span className="text-sm text-gray-600">{analyzedPages}/{totalPages} pages</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div 
+                      className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-300"
+                      style={{ width: `${progressPercentage}%` }}
+                    ></div>
+                  </div>
+                  <div className="text-center">
+                    <Badge className={`${progressPercentage === 100 ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                      {progressPercentage === 100 ? (
+                        <>
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Complete
+                        </>
+                      ) : (
+                        <>
+                          <Clock className="h-3 w-3 mr-1" />
+                          {Math.round(progressPercentage)}% completed
+                        </>
+                      )}
+                    </Badge>
+                  </div>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div 
-                    className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-300"
-                    style={{ width: `${progressPercentage}%` }}
-                  ></div>
-                </div>
+              )}
+              
+              {isImage && (
                 <div className="text-center">
-                  <Badge className={`${progressPercentage === 100 ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                    {progressPercentage === 100 ? (
-                      <>
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Complete
-                      </>
-                    ) : (
-                      <>
-                        <Clock className="h-3 w-3 mr-1" />
-                        {Math.round(progressPercentage)}% completed
-                      </>
-                    )}
+                  <Badge className="bg-green-100 text-green-700">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Analysis Complete
                   </Badge>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -126,9 +144,14 @@ const FileRecognitionModal = ({
                     <ArrowRight className="h-5 w-5 text-blue-600" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-800">Continue from where you left off</h4>
+                    <h4 className="font-semibold text-gray-800">
+                      {isImage ? "View previous analysis" : "Continue from where you left off"}
+                    </h4>
                     <p className="text-sm text-gray-600 mt-1">
-                      Resume analysis from page {analyzedPages + 1} and save tokens
+                      {isImage 
+                        ? "View the previous analysis results and generate new questions"
+                        : `Resume analysis from page ${(analyzedPages || 0) + 1} and save tokens`
+                      }
                     </p>
                     <div className="mt-3">
                       <Button 
@@ -144,7 +167,7 @@ const FileRecognitionModal = ({
                         ) : (
                           <>
                             <ArrowRight className="h-4 w-4 mr-2" />
-                            Continue Analysis
+                            {isImage ? "View Analysis" : "Continue Analysis"}
                           </>
                         )}
                       </Button>
@@ -162,7 +185,7 @@ const FileRecognitionModal = ({
                   <div className="flex-1">
                     <h4 className="font-semibold text-gray-800">Start fresh analysis</h4>
                     <p className="text-sm text-gray-600 mt-1">
-                      Completely re-analyze the entire document from the beginning
+                      {isImage ? "Analyze the image again from scratch" : "Completely re-analyze the entire document from the beginning"}
                     </p>
                     <div className="mt-3">
                       <Button 
@@ -181,12 +204,23 @@ const FileRecognitionModal = ({
           </div>
 
           {/* Warning for fresh start */}
-          {progressPercentage > 25 && (
+          {!isImage && progressPercentage > 25 && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-yellow-600" />
                 <p className="text-sm text-yellow-700">
                   <strong>Note:</strong> Starting a fresh analysis will use additional tokens and replace your existing progress.
+                </p>
+              </div>
+            </div>
+          )}
+          
+          {isImage && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-blue-600" />
+                <p className="text-sm text-blue-700">
+                  <strong>Note:</strong> Starting a fresh analysis will generate new insights and may differ from the previous analysis.
                 </p>
               </div>
             </div>
@@ -199,7 +233,7 @@ const FileRecognitionModal = ({
               variant="ghost"
               className="text-gray-500 hover:text-gray-700"
             >
-              Cancel & Choose Different File
+              {isImage ? "Cancel & Choose Different Image" : "Cancel & Choose Different File"}
             </Button>
           </div>
         </div>
